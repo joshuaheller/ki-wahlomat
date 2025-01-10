@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { type FastifyPluginAsync } from 'fastify';
 import AutoLoad, { type AutoloadPluginOptions } from '@fastify/autoload';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 
 export type AppOptions = {
   // Place your custom options for app below here.
@@ -18,6 +19,15 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify, options_): Promise<v
   // Place here your custom code!
 
   fastify.register(cors, {});
+
+  // Configure multipart with larger limits
+  fastify.register(multipart, {
+    limits: {
+      fieldSize: 100 * 1024 * 1024, // 100MB field size
+      fileSize: 100 * 1024 * 1024,  // 100MB file size
+      files: 10,                     // Max number of files
+    }
+  });
 
   // Do not touch the following lines
 

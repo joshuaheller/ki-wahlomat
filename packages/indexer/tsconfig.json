@@ -6,7 +6,8 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "esModuleInterop": true,
-    "lib": ["esnext"]
+    "lib": ["esnext"],
+    "target": "es2020"
   },
   "include": ["src/**/*.ts"]
 }

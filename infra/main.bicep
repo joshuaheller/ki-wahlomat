@@ -58,11 +58,11 @@ param openAiSkuName string = 'S0'
 param webAppLocation string
 
 param chatGptDeploymentName string // Set in main.parameters.json
-param chatGptDeploymentCapacity int = 30
+param chatGptDeploymentCapacity int = 300
 param chatGptModelName string // Set in main.parameters.json
 param chatGptModelVersion string // Set in main.parameters.json
 param embeddingDeploymentName string = 'embedding'
-param embeddingDeploymentCapacity int = 30
+param embeddingDeploymentCapacity int = 300
 param embeddingModelName string = 'text-embedding-ada-002'
 
 @description('Id of the user or app to assign application roles')

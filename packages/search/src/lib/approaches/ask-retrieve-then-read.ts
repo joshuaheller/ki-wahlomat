@@ -10,29 +10,46 @@ import {
 } from './approach.js';
 import { ApproachBase } from './approach-base.js';
 
-const SYSTEM_CHAT_TEMPLATE = `You are an intelligent assistant helping Consto Real Estate company customers with support questions regarding terms of service, privacy policy, and questions about support requests.
-Use 'you' to refer to the individual asking the questions even if they ask with 'I'.
-Answer the following question using only the data provided in the sources below.
-For tabular information return it as an html table. Do not return markdown format.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response.
-If you cannot answer using the sources below, say you don't know. Use below example to answer`;
+const SYSTEM_CHAT_TEMPLATE = `
+Du bist ein politisch neutraler Assistent, der thematische Fragen über Parteien beantwortet, anhand deren Wahlprogramm. Du bist sachlich und faktenorientiert.
 
-// shots/sample conversation
-const QUESTION = `
-'What happens if a guest breaks something?'
+Wenn eine Frage gestellt wird, die parteiübergreifend ist, dann berücksichtige jede Partei (CDU/CSU, SPD, Grüne, FDP, AfD, BSW, Linke), die einen Standpunkt zu dem Thema hat.
+Bei Fragen zu einer bestimmten Partei berücksichtige NUR deren Wahlprogramm.
 
-Sources:
-info1.txt: Compensation for Damage Accidents can happen during a stay, and we have procedures in place to handle compensation for damage. If you, as a guest, notice damage during your stay or if you're a host and your property has been damaged, report it immediately through the platform
-info2.pdf: Guests must not engage in any prohibited activities, including but not limited to: - Unauthorized parties or events - Smoking in non-smoking properties - Violating community rules - Damaging property or belongings
-info3.pdf: Once you've provided the necessary information, submit the report. Our financial support team will investigate the matter and work to resolve it promptly.
-`;
+# Antwortschema für allgemein/parteiübergreifenden Fragen
+CDU/CSU:
+{Standpunkt der Partei, wenn vorhanden}
+AfD:
+{Standpunkt der Partei, wenn vorhanden}
+SPD:
+{Standpunkt der Partei, wenn vorhanden}
+Die Grünen:
+{Standpunkt der Partei, wenn vorhanden}
+BSW:
+{Standpunkt der Partei, wenn vorhanden}
+FDP:
+{Standpunkt der Partei, wenn vorhanden}
+Die Linke:
+{Standpunkt der Partei, wenn vorhanden}
 
-const ANSWER = `If a guest breaks something, report the damage immediately through the platform [info1.txt]. Once you've provided the necessary information, submit the report. Our financial support team will investigate the matter and work to resolve it promptly [info3.pdf].`;
+Beantworte die folgende Frage, indem du nur die Daten aus den unten aufgeführten Quellen verwendest.
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Gib immer den Namen der Quelle für jede Fakten an, die du in deiner Antwort verwendest.
+Wenn du die Frage nicht anhand der unten aufgeführten Quellen beantworten kannst, gib an, dass du es nicht weißt.`;
 
 /**
  * Simple retrieve-then-read implementation, using the AI Search and OpenAI APIs directly.
  * It first retrieves top documents from search, then constructs a prompt with them, and then uses
  * OpenAI to generate an completion (answer) with that prompt.
+ * 
+ * Example:
+ * Question: "What happens if a guest breaks something?"
+ * Sources:
+ * info1.txt: Compensation for Damage Accidents can happen during a stay...
+ * info2.pdf: Guests must not engage in any prohibited activities...
+ * info3.pdf: Once you've provided the necessary information...
+ * 
+ * Answer: If a guest breaks something, report the damage immediately through the platform [info1.txt].
+ * Once you've provided the necessary information, submit the report...
  */
 export class AskRetrieveThenRead extends ApproachBase implements AskApproach {
   constructor(
@@ -55,8 +72,8 @@ export class AskRetrieveThenRead extends ApproachBase implements AskApproach {
     messageBuilder.appendMessage('user', userContent);
 
     // Add shots/samples. This helps model to mimic response and make sure they match rules laid out in system message.
-    messageBuilder.appendMessage('assistant', QUESTION);
-    messageBuilder.appendMessage('user', ANSWER);
+    // messageBuilder.appendMessage('assistant', QUESTION);
+    // messageBuilder.appendMessage('user', ANSWER);
 
     const messages = messageBuilder.messages;
 
@@ -64,8 +81,8 @@ export class AskRetrieveThenRead extends ApproachBase implements AskApproach {
     const chatCompletion = await openAiChat.completions.create({
       model: this.chatGptModel,
       messages,
-      temperature: Number(context?.temperature ?? 0.3),
-      max_tokens: 1024,
+      temperature: Number(context?.temperature ?? 0.1),
+      max_tokens: 4000,
       n: 1,
     });
 

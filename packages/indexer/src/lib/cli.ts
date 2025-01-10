@@ -63,7 +63,11 @@ export async function indexFiles(files: string[], options: IndexFilesOptions) {
     console.log('Completed.');
   } catch (_error: unknown) {
     const error = _error as Error;
-    console.error(`Error indexing files: ${error.message}`);
+    console.error('Error indexing files:');
+    console.error(error);
+    if ('response' in error) {
+      console.error('Response:', error.response);
+    }
     process.exitCode = 1;
   }
 }
@@ -95,17 +99,57 @@ async function indexFile(file: string, options: IndexFilesOptions) {
     useVectors,
     wait,
   };
-  const type = mime.getType(extname(file)) ?? 'application/octet-stream';
+  const type = mime.getType(extname(file)) ?? 'application/pdf';
   const fileData = await fs.readFile(file);
   formData.append('file', new Blob([fileData], { type }), file);
   formData.append('options', JSON.stringify(fileIndexOptions));
-  const response = await fetch(`${indexerUrl}/indexes/${indexName}/files`, {
-    method: 'POST',
-    body: formData,
-  });
-  if (!response.ok) {
-    const errorDetails = await response.json();
-    throw new Error(`Error indexing file "${file}": ${errorDetails.message}`);
+  
+  const maxRetries = 3;
+  let retryCount = 0;
+  let lastError: Error | null = null;
+
+  while (retryCount < maxRetries) {
+    try {
+      const response = await fetch(`${indexerUrl}/indexes/${indexName}/files`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('Response status:', response.status);
+        console.error('Response text:', text);
+        
+        try {
+          const errorDetails = JSON.parse(text);
+          if (response.status === 429) {
+            // Rate limit hit - wait and retry
+            const retryAfter = parseInt(response.headers.get('retry-after') || '1');
+            console.log(`Rate limit hit, waiting ${retryAfter} seconds before retry ${retryCount + 1}/${maxRetries}...`);
+            await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+            retryCount++;
+            continue;
+          }
+          throw new Error(`Error indexing file "${file}": ${errorDetails.message}`);
+        } catch (e) {
+          throw new Error(`Error indexing file "${file}": ${text}`);
+        }
+      }
+      console.log(`File "${file}" indexed successfully`);
+      return;
+    } catch (error) {
+      console.error('Fetch error:', error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      retryCount++;
+      if (retryCount < maxRetries) {
+        const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        console.log(`Retrying in ${waitTime/1000} seconds... (Attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
   }
-  console.log(`File "${file}" indexed successfully`);
+
+  if (lastError) {
+    throw lastError;
+  }
 }

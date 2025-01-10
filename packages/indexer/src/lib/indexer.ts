@@ -50,7 +50,7 @@ export class Indexer {
     if (names.includes(indexName)) {
       this.logger.debug(`Search index "${indexName}" already exists`);
     } else {
-      const index: SearchIndex = {
+      const index = {
         name: indexName,
         fields: [
           {
@@ -62,18 +62,14 @@ export class Indexer {
             name: 'content',
             type: 'Edm.String',
             searchable: true,
-            analyzerName: 'en.microsoft',
+            analyzerName: 'de.lucene',
           },
           {
             name: 'embedding',
             type: 'Collection(Edm.Single)',
-            hidden: false,
             searchable: true,
-            filterable: false,
-            sortable: false,
-            facetable: false,
-            vectorSearchDimensions: 1536,
-            vectorSearchConfiguration: 'default',
+            vectorSearchProfileName: 'default',
+            dimensions: 1536
           },
           {
             name: 'category',
@@ -105,17 +101,23 @@ export class Indexer {
           ],
         },
         vectorSearch: {
-          algorithmConfigurations: [
+          profiles: [
+            {
+              name: 'default',
+              algorithmConfigurationName: 'default'
+            }
+          ],
+          algorithms: [
             {
               name: 'default',
               kind: 'hnsw',
               parameters: {
-                metric: 'cosine',
-              },
-            },
-          ],
+                metric: 'cosine'
+              }
+            }
+          ]
         },
-      };
+      } as SearchIndex;
       this.logger.debug(`Creating "${indexName}" search index...`);
       await searchIndexClient.createIndex(index);
     }
