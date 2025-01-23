@@ -17,23 +17,23 @@ import { ApproachBase } from './approach-base.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const TEMPLATE_PREFIX = `You are an intelligent assistant helping Consto Real Estate company customers with support questions regarding terms of service, privacy policy, and questions about support requests.
-Answer the question using only the data provided in the information sources below.
-For tabular information return it as an html table. Do not return markdown format.
-Each source has a name followed by colon and the actual data, quote the source name for each piece of data you use in the response.
-For example, if the question is "What color is the sky?" and one of the information sources says "info123: the sky is blue whenever it's not cloudy", then answer with "The sky is blue [info123]"
-It's important to strictly follow the format where the name of the source is in square brackets at the end of the sentence, and only up to the prefix before the colon (":").
-If there are multiple sources, cite each one in their own square brackets. For example, use "[info343][ref-76]" and not "[info343,ref-76]".
-Never quote tool names as sources.
-If you cannot answer using the sources below, say that you don't know.
+const TEMPLATE_PREFIX = `Du bist ein intelligenter Assistent, der den Wählern der Bundesrepublik Deutschland bei Fragen zu den zur Wahl stehenden Parteien und deren Wahlpgroammen hilfst.
+Beantworte die Frage nur mit den Daten, die in den unten stehenden Informationsquellen angegeben sind.
+Gebe tabellarische Informationen als html-Tabelle zurück. Gebe kein Markdown-Format an.
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und den eigentlichen Daten; gebe den Namen der Quelle für jeden Teil der Daten an, den du in deiner Antwort verwendest.
+Wenn die Frage zum Beispiel lautet „Welche Farbe hat der Himmel?“ und eine der Informationsquellen sagt „info123: Der Himmel ist blau, wenn er nicht bewölkt ist“, dann antworten Sie mit „Der Himmel ist blau [info123]“.
+Es ist wichtig, sich strikt an das Format zu halten, bei dem der Name der Quelle in eckigen Klammern am Ende des Satzes steht, und zwar nur bis zum Präfix vor dem Doppelpunkt („:“).
+Wenn es mehrere Quellen gibt, zitiere jede einzelne in einer eigenen eckigen Klammer. Verwende zum Beispiel „[info343][ref-76]“ und nicht „[info343,ref-76]“.
+Gib niemals den Namen eines Tools als Quelle an.
+Wenn du die unten aufgeführten Quellen nicht verwenden kannst, sagen, dass du es nicht weißt.
 
-You can access to the following tools:`;
+Du kannst auf die folgenden Tools zugreifen:`;
 
-const TEMPLATE_SUFFIX = `Begin!
+const TEMPLATE_SUFFIX = `Beginne!
 
-Question: {input}
+Frage: {input}
 
-Thought: {agent_scratchpad}`;
+Gedanken: {agent_scratchpad}`;
 
 /**
  * Attempt to answer questions by iteratively evaluating the question to see what information is missing,
@@ -74,8 +74,7 @@ export class AskReadRetrieveRead extends ApproachBase implements AskApproach {
       new DynamicTool({
         name: 'CognitiveSearch',
         func: searchAndStore,
-        description:
-          'useful for searching company related documents such as terms of service, privacy policy, and questions about support requests',
+        description: 'nützlich für die Suche nach parteibezogenen Dokumenten wie Wahlprogramme',
         callbacks: callbackManager,
       }),
       new EmployeeInfoTool('Employee1', { callbacks: callbackManager }),
@@ -135,7 +134,7 @@ class EmployeeInfoTool extends CsvLookupTool {
 
   name = 'Employee';
   description =
-    'useful to look up details given an input key as opposite to searching data with an unstructured question';
+    'nützlich für die Suche nach Details anhand eines Eingabeschlüssels, im Gegensatz zur Suche nach Daten mit einer unstrukturierten Frage';
 
   constructor(
     private employeeName: string,

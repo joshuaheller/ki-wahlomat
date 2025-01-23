@@ -11,37 +11,59 @@ import { type Message, messagesToString } from '../message.js';
 import { MessageBuilder } from '../message-builder.js';
 import { getTokenLimit } from '../tokens.js';
 
-const SYSTEM_MESSAGE_CHAT_CONVERSATION = `Assistant helps the Consto Real Estate company customers with support questions regarding terms of service, privacy policy, and questions about support requests. Be brief in your answers.
-Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
-For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, for example: [info1.txt]. Don't combine sources, list each source separately, for example: [info1.txt][info2.pdf].
+const SYSTEM_MESSAGE_CHAT_CONVERSATION = `Du bist ein politisch neutraler Assistent, der thematische Fragen über Parteien beantwortet, anhand deren Wahlprogramm. Du bist sachlich und faktenorientiert.
+
+Wenn eine Frage gestellt wird, die parteiübergreifend ist, dann berücksichtige jede Partei (CDU/CSU, SPD, Grüne, FDP, AfD, BSW, Linke), die einen Standpunkt zu dem Thema hat.
+Bei Fragen zu einer bestimmten Partei berücksichtige NUR deren Wahlprogramm.
+
+# Antwortschema für allgemein/parteiübergreifenden Fragen
+CDU/CSU:
+{Standpunkt der Partei, wenn vorhanden}
+AfD:
+{Standpunkt der Partei, wenn vorhanden}
+SPD:
+{Standpunkt der Partei, wenn vorhanden}
+Die Grünen:
+{Standpunkt der Partei, wenn vorhanden}
+BSW:
+{Standpunkt der Partei, wenn vorhanden}
+FDP:
+{Standpunkt der Partei, wenn vorhanden}
+Die Linke:
+{Standpunkt der Partei, wenn vorhanden}
+
+Beantworte die folgende Frage, indem du nur die Daten aus den unten aufgeführten Quellen verwendest.
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Gib immer den Namen der Quelle für jede Fakten an, die du in deiner Antwort verwendest.
+Wenn du die Frage nicht anhand der unten aufgeführten Quellen beantworten kannst, gib an, dass du es nicht weißt.
+
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Gib immer den Namen der Quelle für jede Fakten an, die du in deiner Antwort verwendest. Verwende eckige Klammern, um auf die Quelle zu verweisen, zum Beispiel: [info1.txt]. Kombiniere keine Quellen, sondern führe jede Quelle einzeln auf, z. B.: [info1.txt][info2.pdf].
 {follow_up_questions_prompt}
 {injected_prompt}
 `;
 
-const FOLLOW_UP_QUESTIONS_PROMPT_CONTENT = `Generate 3 very brief follow-up questions that the user would likely ask next.
-Enclose the follow-up questions in double angle brackets. Example:
-<<Am I allowed to invite friends for a party?>>
-<<How can I ask for a refund?>>
-<<What If I break something?>>
+const FOLLOW_UP_QUESTIONS_PROMPT_CONTENT = `Erstelle 3 sehr kurze Anschlussfragen, die der Benutzer wahrscheinlich als nächstes stellen würde.
+Schließe die Folgefragen in doppelte spitze Klammern ein. Beispiel:
+<<Wie vergleicht sich die Wirtschaftspolitik der Partei mit denen der FPD?>>
+<<Welche Parteien haben einen ähnlichen Ansatz zur Migrationspolitik?>>
+<<Wie begründen die Grünen das Verbrennerverbot?>>
 
-Do no repeat questions that have already been asked.
-Make sure the last question ends with ">>".`;
+Wiederhole keine Fragen, die bereits gestellt wurden.
+Achte darauf, dass die letzte Frage mit „>>“ endet.`;
 
-const QUERY_PROMPT_TEMPLATE = `Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about terms of service, privacy policy, and questions about support requests.
-Generate a search query based on the conversation and the new question.
-Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
-Do not include any text inside [] or <<>> in the search query terms.
-Do not include any special characters like '+'.
-If the question is not in English, translate the question to English before generating the search query.
-If you cannot generate a search query, return just the number 0.
+const QUERY_PROMPT_TEMPLATE = `Nachfolgend finden Sie einen Verlauf der bisherigen Konversation und eine neue Frage des Nutzers, die durch eine Suche in einer Wissensdatenbank über Wahlprogramme zur Bundestagswahl der größten Parteien beantwortet werden muss.
+Erstelle eine Suchanfrage auf der Grundlage der Konversation und der neuen Frage.
+Nehme keine zitierten Quelldateinamen und Dokumentennamen wie z.B. info.txt oder Wahlprogramm-Partei.md in die Suchanfrage auf.
+Füge keinen Text innerhalb von [] oder <<>> in die Suchabfrage ein.
+Füge keine Sonderzeichen wie '+' ein.
+Wenn die Frage nicht auf Deutsch ist, übersetze die Frage ins Deutsche, bevor du die Suchabfrage erstellst.
+Wenn du keine Suchabfrage erstellen kannst, gebe nur die Zahl 0 zurück.
 `;
 
 const QUERY_PROMPT_FEW_SHOTS: Message[] = [
-  { role: 'user', content: 'What happens if a payment error occurs?' },
-  { role: 'assistant', content: 'Show support for payment errors' },
-  { role: 'user', content: 'can I get refunded if cannot travel?' },
-  { role: 'assistant', content: 'Refund policy' },
+  { role: 'user', content: 'Wie ist die Migrationspolitik der AFD??' },
+  { role: 'assistant', content: 'Migrationspolitik' },
+  { role: 'user', content: 'Wie ist die Wirtschaftspolitik der SPD?' },
+  { role: 'assistant', content: 'Wirtschaftspolitik' },
 ];
 
 /**
