@@ -10,7 +10,7 @@ const Layout = () => {
       <header className={styles.header}>
         <div className={styles.headerContainer}>
           <Link to="/" className={styles.headerTitleContainer}>
-            <h3 className={styles.headerTitle}>GPT + Enterprise data | Sample</h3>
+            <h3 className={styles.headerTitle}>KI-Wahl-o-mat</h3>
           </Link>
           <nav>
             <ul className={styles.headerNavList}>
@@ -27,14 +27,14 @@ const Layout = () => {
                   to="/qa"
                   className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}
                 >
-                  Ask a question
+                  Stelle eine Frage
                 </NavLink>
               </li>
               <li className={styles.headerNavLeftMargin}>
                 <a
-                  href="https://aka.ms/azureopenai/javascript"
+                  href="https://github.com/joshuaheller/ki-wahlomat"
                   target={'_blank'}
-                  title="Github repository link"
+                  title="Github repository (Open-Source)"
                   rel="noreferrer"
                 >
                   <img
@@ -49,7 +49,7 @@ const Layout = () => {
               </li>
             </ul>
           </nav>
-          <h4 className={styles.headerRightText}>Azure OpenAI + AI Search</h4>
+          <h4 className={styles.headerRightText}>The AI Software Company</h4>
         </div>
       </header>
 
